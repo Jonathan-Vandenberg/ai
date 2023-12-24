@@ -1,76 +1,31 @@
-import { useState } from "react"
-const { Configuration, OpenAIApi } = require("openai");
+'use client'
 
-const ChatbotApp = () => {
-    const configuration = new Configuration({
-        apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-    });
+import {Message, useChat} from 'ai/react'
 
-    const openai = new OpenAIApi(configuration);
-    const [prompt, setPrompt] = useState("");
-    const [apiResponse, setApiResponse] = useState("");
-    const [loading, setLoading] = useState(false);
-
-    const handleSubmit = async (e: any) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            const result = await openai.createCompletion({
-                model: "text-davinci-003",
-                prompt: prompt,
-                temperature: 0.5,
-                max_tokens: 4000,
-            });
-            //console.log("response", result.data.choices[0].text);
-            setApiResponse(result.data.choices[0].text);
-        } catch (e) {
-            //console.log(e);
-            setApiResponse("Something is going wrong, Please try again.");
-        }
-        setLoading(false);
-    };
-
-
+const Chat = () => {
+    const {messages, handleSubmit, input, handleInputChange} = useChat()
     return (
-        <>
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: '100vh',
-                }}
-            >
-                <form onSubmit={handleSubmit}>
-          <textarea
-              value={prompt}
-              placeholder="Please ask to openai"
-              onChange={(e) => setPrompt(e.target.value)}
-          ></textarea>
-                    <button
-                        disabled={loading || prompt.length === 0}
-                        type="submit"
-                    >
-                        {loading ? "Generating..." : "Generate"}
-                    </button>
-                </form>
-            </div>
-            {apiResponse && (
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "center",
-                    }}
-                >
-          <pre>
-            <strong>API response:</strong>
-              {apiResponse}
-          </pre>
-                </div>
-            )}
-        </>
-    );
-};
+        <div>
+            {messages.map((message: Message) => {
+                return (
+                    <div key={message.id}>
+                        {message.role === 'assistant' ? <h3>GPT-4</h3> : <h3>User</h3>}
+                        {message.content.split('\n').map((currentTextBlock: string, index: number) => {
+                            if(currentTextBlock === ''){
+                                return <p key={message.id + index}>&nbsp;</p>
+                            } else {
+                                return <p key={message.id + index}>{currentTextBlock}</p>
+                            }
+                        })}
+                    </div>)
+            })}
 
+            <form onSubmit={handleSubmit}>
+                <textarea value={input} placeholder={'Type here...'} onChange={handleInputChange} />
+                <button>SEND</button>
+            </form>
+        </div>
+    )
+}
 
-export default ChatbotApp;
+export default Chat
